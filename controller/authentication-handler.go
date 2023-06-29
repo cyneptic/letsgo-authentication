@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/cyneptic/letsgo-authentication/controller/middleware"
+	"github.com/cyneptic/letsgo-authentication/controller/validators"
 	"github.com/cyneptic/letsgo-authentication/internal/core/entities"
 	"github.com/cyneptic/letsgo-authentication/internal/core/ports"
 	"github.com/cyneptic/letsgo-authentication/internal/core/service"
@@ -11,6 +13,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 )
+
 type AuthenticationHandler struct {
 	svc ports.UserServiceContract
 }
@@ -21,23 +24,30 @@ func NewAuthenticationHandler() *AuthenticationHandler {
 		svc: svc,
 	}
 }
-func AddAuthServiceRoutes(e echo.Echo)  {
+func AddAuthServiceRoutes(e echo.Echo) {
 	h := NewAuthenticationHandler()
 	e.POST("/login", h.login)
 	e.POST("/register", h.register)
-
+	e.POST("/logout", h.logout)
+	e.POST("/create_admin", h.CreateAdmin)
+	e.GET("/is_admin/:id", h.IsAdmin)
+	e.GET("/verify/:number/:id", h.Verify)
+	e.GET("/test", h.Test, middleware.AuthMiddleware)
+}
+func (h *AuthenticationHandler) Test(c echo.Context) error {
+	return c.JSON(http.StatusOK, "You Hit /test so token is valid")
 }
 
+// validation done
 func (h *AuthenticationHandler) login(c echo.Context) error {
 	user := new(entities.User)
 	if err := c.Bind(user); err != nil {
 		return c.JSON(http.StatusBadRequest, "Invalid request body")
 	}
-
-	// err := validators.ValidateUserLogin(*user)
-	// if err != nil {
-	// 	return c.JSON(http.StatusBadRequest, err.Error())
-	// }
+	err := validators.LoginValidation(*user)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 	token, err := h.svc.LoginHandler(*user)
 
 	if err != nil {
@@ -46,34 +56,138 @@ func (h *AuthenticationHandler) login(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(200, token)
+	return c.JSON(http.StatusOK, token)
 }
 
+// validation done
+func (h *AuthenticationHandler) logout(c echo.Context) error {
+
+	authHeader := c.Request().Header.Get("Authorization")
+
+	err := validators.LogoutValidation(authHeader)
+
+	if err != nil {
+		return c.JSON(http.StatusForbidden, err.Error())
+	}
+
+	err = h.svc.Logout(authHeader)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]interface{}{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, "logout successful")
+}
+
+// validation done
 func (h *AuthenticationHandler) register(c echo.Context) error {
 
-	newUser := new(entities.User)
+	newUser := &entities.User{
+		DBModel: entities.DBModel{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+		},
+		Role: "user",
+	}
 
-	newUser.ID = uuid.New()
-	newUser.CreatedAt = time.Now()
 	if err := c.Bind(&newUser); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Invalid request body",
 		})
 	}
-	// err := validators.ValidateUserRegister(*newUser)
 
-	// if err != nil {
-	// 	return c.JSON(http.StatusBadRequest, err.Error())
-	// }
+	err := validators.RegisterValidation(*newUser)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
 
-	err := h.svc.AddUser(*newUser)
+	err = h.svc.AddUser(*newUser)
 
 	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(http.StatusOK, map[string]*entities.User{
+		"newUser": newUser,
+	})
+}
+
+// validation done
+func (h *AuthenticationHandler) CreateAdmin(c echo.Context) error {
+	newAdmin := &entities.User{
+		DBModel: entities.DBModel{
+			ID:        uuid.New(),
+			CreatedAt: time.Now(),
+		},
+		Role: "admin",
+	}
+
+	if err := c.Bind(&newAdmin); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Invalid request body",
 		})
 	}
-	return c.JSON(200, map[string]interface{}{
-		"newUser": newUser,
-	})
+	err := validators.RegisterValidation(*newAdmin)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+	err = h.svc.AddUser(*newAdmin)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, newAdmin)
+}
+// validation done
+func (h *AuthenticationHandler) IsAdmin(c echo.Context) error {
+	idParams := c.Param("id")
+	err := validators.IsAdmin(idParams)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	accountId, err := uuid.Parse(idParams)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	isAdmin, err := h.svc.IsAdminAccount(accountId)
+	if err != nil {
+		println(err.Error())
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(http.StatusBadRequest, isAdmin)
+}
+// validation done
+func (h *AuthenticationHandler) Verify(c echo.Context) error {
+	number := c.Param("number")
+	id := c.Param("id")
+
+	err := validators.VerifyValidation(number , id)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+	}
+
+	accountId, err := uuid.Parse(id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	verifiedAccount, err := h.svc.Verify(number, accountId)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": err.Error(),
+		})
+	}
+	return c.JSON(http.StatusOK, verifiedAccount)
 }
