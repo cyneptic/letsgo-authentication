@@ -30,7 +30,7 @@ func AddAuthServiceRoutes(e echo.Echo) {
 	e.POST("/register", h.register)
 	e.POST("/logout", h.logout)
 	e.POST("/create_admin", h.CreateAdmin)
-	e.GET("/is_admin/:id/:role", h.IsAdmin)
+	e.GET("/is-admin/:id/:role", h.IsAdmin)
 	e.GET("/verify/:number/:id", h.Verify)
 	e.GET("/test", h.Test, middleware.AuthMiddleware)
 }
