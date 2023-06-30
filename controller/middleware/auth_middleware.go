@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	repositories "github.com/cyneptic/letsgo-authentication/infrastructure/repository"
 	"github.com/dgrijalva/jwt-go"
@@ -37,7 +38,7 @@ func AuthMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 				return nil, fmt.Errorf("invalid signing method")
 			}
 			
-			return []byte("secret"), nil
+			return []byte(os.Getenv("jwt_key")), nil
 		})
 		if err != nil {
 			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid token "})

@@ -25,43 +25,22 @@ func NewAuthenticationService() *AuthenticationService {
 		redis: redis,
 	}
 }
-func (u *AuthenticationService) IsUserAlreadyRegisters(newUser entities.User) (bool, error) {
-	res, err := u.db.IsUserAlreadyRegisters(newUser)
 
-	if err != nil {
-		return true, err
-	}
-
-	if res > 0 {
-		return true, nil
-	}
-	return false, nil
-}
 func (u *AuthenticationService) AddUser(newUser entities.User) error {
 
-	isUserAlreadyExist, err := u.IsUserAlreadyRegisters(newUser)
-
-	if err != nil {
-		
-		return err
-	}
-
-	if isUserAlreadyExist == true {
-		err := errors.New("user already registered")
-		return err
-	}
+	
 
 	newUser.Password , _  = HashPassword(newUser.Password)
 
-	err = u.db.AddUser(newUser)
+	err := u.db.AddUser(newUser)
 	return err
 }
 
-func (u *AuthenticationService) LoginHandler(user entities.User) (string, error) {
+func (u *AuthenticationService) LoginService(user entities.User) (string, error) {
 	email := user.Email
 	password := user.Password
 
-	foundedUser, err := u.db.LoginHandler(email)
+	foundedUser, err := u.db.Login(email)
 
 	if err != nil {
 		return "", err
@@ -104,6 +83,13 @@ func (u *AuthenticationService) IsAdminAccount(id uuid.UUID) (bool, error) {
 		return false, err
 	}
 	return isAdmin, nil
+}
+func (u *AuthenticationService) IsSuperAdminAccount(id uuid.UUID) (bool, error) {
+	isSuperAdmin, err := u.db.IsSuperAdminAccount(id)
+	if err != nil {
+		return false, err
+	}
+	return isSuperAdmin, nil
 }
 func (u *AuthenticationService) Verify(number string, id uuid.UUID) (bool, error) {
 	isVerified, err := u.db.Verify(number, id)
