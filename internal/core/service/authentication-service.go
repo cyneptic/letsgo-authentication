@@ -77,20 +77,14 @@ func (u *AuthenticationService) TokenReceiver(token string) (string, error) {
 	val, err := u.redis.TokenReceiver(token)
 	return val, err
 }
-func (u *AuthenticationService) IsAdminAccount(id uuid.UUID) (bool, error) {
-	isAdmin, err := u.db.IsAdminAccount(id)
+func (u *AuthenticationService) IsAdminAccount(id uuid.UUID , role string) (bool, error) {
+	isAdmin, err := u.db.IsAdminAccount(id , role)
 	if err != nil {
 		return false, err
 	}
 	return isAdmin, nil
 }
-func (u *AuthenticationService) IsSuperAdminAccount(id uuid.UUID) (bool, error) {
-	isSuperAdmin, err := u.db.IsSuperAdminAccount(id)
-	if err != nil {
-		return false, err
-	}
-	return isSuperAdmin, nil
-}
+
 func (u *AuthenticationService) Verify(number string, id uuid.UUID) (bool, error) {
 	isVerified, err := u.db.Verify(number, id)
 	if err != nil {

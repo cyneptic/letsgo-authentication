@@ -11,9 +11,9 @@ type UserRepositoryContracts interface {
 	
 	AddUser(user entities.User) error
 	Login(email string) (*entities.User, error)
-	IsAdminAccount(id uuid.UUID) (bool, error)
+	IsAdminAccount(id uuid.UUID , role string) (bool, error)
 	Verify(number string , id uuid.UUID) (bool, error)
-	IsSuperAdminAccount(id uuid.UUID) (bool, error)
+	
 }
 
 type InMemoryRespositoryContracts interface {

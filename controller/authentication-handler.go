@@ -30,7 +30,7 @@ func AddAuthServiceRoutes(e echo.Echo) {
 	e.POST("/register", h.register)
 	e.POST("/logout", h.logout)
 	e.POST("/create_admin", h.CreateAdmin)
-	e.GET("/is_admin/:id", h.IsAdmin)
+	e.GET("/is_admin/:id/:role", h.IsAdmin)
 	e.GET("/verify/:number/:id", h.Verify)
 	e.GET("/test", h.Test, middleware.AuthMiddleware)
 }
@@ -120,7 +120,6 @@ func (h *AuthenticationHandler) CreateAdmin(c echo.Context) error {
 		DBModel: entities.DBModel{
 			CreatedAt: time.Now(),
 		},
-		Role: "admin",
 	}
 
 	if err := c.Bind(&newAdmin); err != nil {
@@ -145,7 +144,8 @@ func (h *AuthenticationHandler) CreateAdmin(c echo.Context) error {
 // validation done
 func (h *AuthenticationHandler) IsAdmin(c echo.Context) error {
 	idParams := c.Param("id")
-	err := validators.IsAdmin(idParams)
+	role := c.Param("role")
+	err := validators.IsAdmin(idParams , role)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
@@ -157,7 +157,7 @@ func (h *AuthenticationHandler) IsAdmin(c echo.Context) error {
 			"error": err.Error(),
 		})
 	}
-	isAdmin, err := h.svc.IsAdminAccount(accountId)
+	isAdmin, err := h.svc.IsAdminAccount(accountId , role)
 	if err != nil {
 		println(err.Error())
 		return c.JSON(http.StatusBadRequest, map[string]string{
