@@ -1,10 +1,12 @@
 package service
 
 import (
+	"os"
 	"time"
-	"golang.org/x/crypto/bcrypt"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func GenerateToken(id uuid.UUID) string {
@@ -12,7 +14,7 @@ func GenerateToken(id uuid.UUID) string {
 	claims := token.Claims.(jwt.MapClaims)
 	claims["user_id"] = id
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
-	t, _ := token.SignedString([]byte("secret"))
+	t, _ := token.SignedString([]byte(os.Getenv("jwt_key")))
 	return t
 }
 func HashPassword(password string) (string, error) {

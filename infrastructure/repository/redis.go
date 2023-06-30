@@ -1,7 +1,8 @@
 package repositories
 
 import (
-	
+	"os"
+	"strconv"
 
 	"github.com/go-redis/redis/v8"
 )
@@ -9,10 +10,11 @@ import (
 var redisClient *redis.Client
 
 func createRedisConnection() *redis.Client {
+	db, _ := strconv.Atoi(os.Getenv("redis_db"))
 	redisClient := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
-		Password: "",
-		DB:       0,
+		Addr:     os.Getenv("redis_uri"),
+		Password: os.Getenv("redis_password"),
+		DB:       db,
 	})
 	return redisClient
 

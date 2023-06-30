@@ -26,7 +26,7 @@ func NewAuthenticationHandler() *AuthenticationHandler {
 }
 func AddAuthServiceRoutes(e echo.Echo) {
 	h := NewAuthenticationHandler()
-	e.POST("/login", h.login)
+	e.POST("/login", h.loginHandler)
 	e.POST("/register", h.register)
 	e.POST("/logout", h.logout)
 	e.POST("/create_admin", h.CreateAdmin)
@@ -39,7 +39,7 @@ func (h *AuthenticationHandler) Test(c echo.Context) error {
 }
 
 // validation done
-func (h *AuthenticationHandler) login(c echo.Context) error {
+func (h *AuthenticationHandler) loginHandler(c echo.Context) error {
 	user := new(entities.User)
 	if err := c.Bind(user); err != nil {
 		return c.JSON(http.StatusBadRequest, "Invalid request body")
@@ -48,7 +48,7 @@ func (h *AuthenticationHandler) login(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	token, err := h.svc.LoginHandler(*user)
+	token, err := h.svc.LoginService(*user)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
@@ -84,7 +84,6 @@ func (h *AuthenticationHandler) register(c echo.Context) error {
 
 	newUser := &entities.User{
 		DBModel: entities.DBModel{
-			ID:        uuid.New(),
 			CreatedAt: time.Now(),
 		},
 		Role: "user",
@@ -119,7 +118,6 @@ func (h *AuthenticationHandler) register(c echo.Context) error {
 func (h *AuthenticationHandler) CreateAdmin(c echo.Context) error {
 	newAdmin := &entities.User{
 		DBModel: entities.DBModel{
-			ID:        uuid.New(),
 			CreatedAt: time.Now(),
 		},
 		Role: "admin",
@@ -166,7 +164,7 @@ func (h *AuthenticationHandler) IsAdmin(c echo.Context) error {
 			"error": err.Error(),
 		})
 	}
-	return c.JSON(http.StatusBadRequest, isAdmin)
+	return c.JSON(http.StatusOK, isAdmin)
 }
 // validation done
 func (h *AuthenticationHandler) Verify(c echo.Context) error {

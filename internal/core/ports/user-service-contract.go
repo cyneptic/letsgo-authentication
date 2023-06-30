@@ -7,9 +7,9 @@ import (
 )
 
 type UserServiceContract interface {
-	IsUserAlreadyRegisters(newUser entities.User) (bool, error)
+	
 	AddUser(newUser entities.User) error
-	LoginHandler(user entities.User) (string, error)
+	LoginService(user entities.User) (string, error)
 	Logout(token string) error
 	IsAdminAccount(id uuid.UUID) (bool, error)
 	Verify(number string , id uuid.UUID) (bool, error)

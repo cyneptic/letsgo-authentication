@@ -8,11 +8,12 @@ import (
 // اینترفیس دیتابیس هستش
 
 type UserRepositoryContracts interface {
-	IsUserAlreadyRegisters(user entities.User) (int64 , error)
+	
 	AddUser(user entities.User) error
-	LoginHandler(email string) (*entities.User, error)
+	Login(email string) (*entities.User, error)
 	IsAdminAccount(id uuid.UUID) (bool, error)
 	Verify(number string , id uuid.UUID) (bool, error)
+	IsSuperAdminAccount(id uuid.UUID) (bool, error)
 }
 
 type InMemoryRespositoryContracts interface {
