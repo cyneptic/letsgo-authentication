@@ -53,7 +53,7 @@ func (r *RedisDB) TokenReceiver(token string) (string, error) {
 	return val, err
 }
 
-func (p *Postgres) IsAdminAccount(id uuid.UUID) (bool, error) {
+func (p *Postgres) IsAdminAccount(id uuid.UUID, role string) (bool, error) {
 	var user entities.User
 	res := p.db.Where("id = ?", id).First(&user)
 	if res.Error != nil {
@@ -63,26 +63,18 @@ func (p *Postgres) IsAdminAccount(id uuid.UUID) (bool, error) {
 		}
 		return false, res.Error
 	}
-	if user.Role == "admin" || user.Role == "super_admin" {
-		return true, nil
-	}
-	return false, nil
-}
-func (p *Postgres) IsSuperAdminAccount(id uuid.UUID) (bool, error) {
-	var user entities.User
-	res := p.db.Where("id = ?", id).First(&user)
-	if res.Error != nil {
-		if res.Error == gorm.ErrRecordNotFound {
-			err := errors.New("there is no account with this ID")
-			return false, err
-		}
-		return false, res.Error
-	}
+
 	if user.Role == "super_admin" {
 		return true, nil
 	}
+
+	if user.Role == role {
+		return true, nil
+	}
+
 	return false, nil
 }
+
 
 func (p *Postgres) Verify(number string , id uuid.UUID) (bool, error) {
 	var user entities.User

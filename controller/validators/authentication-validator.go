@@ -49,9 +49,13 @@ func RegisterValidation(u entities.User) error {
 	}
 	return nil
 }
-func IsAdmin(id string) error {
+func IsAdmin(id string , role string) error {
 	if id == "" {
 		err := errors.New("please enter a valid id")
+		return err
+	}
+	if role == "" || (role != "super_admin" && role != "ticket_admin" && role != "sms_admin") {
+		err := errors.New("please enter a valid role")
 		return err
 	}
 	return nil
