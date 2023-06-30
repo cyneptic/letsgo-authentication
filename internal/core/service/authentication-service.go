@@ -7,6 +7,7 @@ import (
 	repositories "github.com/cyneptic/letsgo-authentication/infrastructure/repository"
 	"github.com/cyneptic/letsgo-authentication/internal/core/entities"
 	"github.com/cyneptic/letsgo-authentication/internal/core/ports"
+	
 	"github.com/google/uuid"
 )
 
@@ -41,7 +42,7 @@ func (u *AuthenticationService) AddUser(newUser entities.User) error {
 	isUserAlreadyExist, err := u.IsUserAlreadyRegisters(newUser)
 
 	if err != nil {
-		print("auth service 39", err)
+		
 		return err
 	}
 
@@ -49,6 +50,8 @@ func (u *AuthenticationService) AddUser(newUser entities.User) error {
 		err := errors.New("user already registered")
 		return err
 	}
+
+	newUser.Password , _  = HashPassword(newUser.Password)
 
 	err = u.db.AddUser(newUser)
 	return err
@@ -63,7 +66,10 @@ func (u *AuthenticationService) LoginHandler(user entities.User) (string, error)
 	if err != nil {
 		return "", err
 	}
-	if foundedUser.Password != password {
+
+	decodedFoundedPassword := CheckPasswordHash(password , foundedUser.Password)
+
+	if decodedFoundedPassword == false {
 		err := errors.New("email or password mismatch")
 		return "", err
 	}

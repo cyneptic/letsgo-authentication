@@ -101,6 +101,8 @@ func (h *AuthenticationHandler) register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
+	
+
 	err = h.svc.AddUser(*newUser)
 
 	if err != nil {
