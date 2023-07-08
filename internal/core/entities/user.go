@@ -12,4 +12,5 @@ type User struct {
 	Email       string    `gorm:"unique" json:"email"`
 	Password    string    `json:"password"`
 	Role        string    `json:"role"`
+	Disabled    bool      `json:"disabled"`
 }

@@ -7,16 +7,21 @@ import (
 
 	"github.com/cyneptic/letsgo-authentication/internal/core/entities"
 	"github.com/google/uuid"
-	
+
 	"gorm.io/gorm"
 )
-
-
 
 // add user to database ( registers user)
 func (p *Postgres) AddUser(user entities.User) error {
 	result := p.db.Create(&user)
 	return result.Error
+}
+
+func (p *Postgres) DisableUser(target uuid.UUID, toggle bool) error {
+	if err := p.db.Model(&entities.User{}).Where("id = ?", target).Update("disabled", toggle).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *Postgres) Login(email string) (*entities.User, error) {
@@ -75,8 +80,7 @@ func (p *Postgres) IsAdminAccount(id uuid.UUID, role string) (bool, error) {
 	return false, nil
 }
 
-
-func (p *Postgres) Verify(number string , id uuid.UUID) (bool, error) {
+func (p *Postgres) Verify(number string, id uuid.UUID) (bool, error) {
 	var user entities.User
 	res := p.db.Where("id = ?", id).First(&user)
 	if res.Error != nil {
@@ -86,8 +90,9 @@ func (p *Postgres) Verify(number string , id uuid.UUID) (bool, error) {
 		}
 		return false, res.Error
 	}
-	if user.PhoneNumber != number { 
+	if user.PhoneNumber != number {
 		return false, nil
 	}
 	return true, nil
 }
+

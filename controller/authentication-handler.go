@@ -14,6 +14,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type DisableUserRequest struct {
+	TargetID string `json:"target_id"`
+	Toggle   bool   `json:"toggle"`
+}
+
 type AuthenticationHandler struct {
 	svc ports.UserServiceContract
 }
@@ -24,7 +29,7 @@ func NewAuthenticationHandler() *AuthenticationHandler {
 		svc: svc,
 	}
 }
-func AddAuthServiceRoutes(e echo.Echo) {
+func AddAuthServiceRoutes(e *echo.Echo) {
 	h := NewAuthenticationHandler()
 	e.POST("/login", h.loginHandler)
 	e.POST("/register", h.register)
@@ -32,10 +37,35 @@ func AddAuthServiceRoutes(e echo.Echo) {
 	e.POST("/create_admin", h.CreateAdmin)
 	e.GET("/is-admin/:id/:role", h.IsAdmin)
 	e.GET("/verify/:number/:id", h.Verify)
+	e.POST("/disable-user", h.DisableUser)
 	e.GET("/test", h.Test, middleware.AuthMiddleware)
 }
 func (h *AuthenticationHandler) Test(c echo.Context) error {
 	return c.JSON(http.StatusOK, "You Hit /test so token is valid")
+}
+
+func (h *AuthenticationHandler) DisableUser(c echo.Context) error {
+	var request DisableUserRequest
+	if err := c.Bind(&request); err != nil {
+		return c.JSON(http.StatusBadRequest, err)
+	}
+
+	err := validators.DisableUser(request.TargetID, request.Toggle)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err)
+	}
+
+	target, err := uuid.Parse(request.TargetID)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err)
+	}
+
+	err = h.svc.DisableUser(target, request.Toggle)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, err)
+	}
+
+	return c.JSON(http.StatusOK, nil)
 }
 
 // validation done
@@ -100,8 +130,6 @@ func (h *AuthenticationHandler) register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	
-
 	err = h.svc.AddUser(*newUser)
 
 	if err != nil {
@@ -141,11 +169,12 @@ func (h *AuthenticationHandler) CreateAdmin(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, newAdmin)
 }
+
 // validation done
 func (h *AuthenticationHandler) IsAdmin(c echo.Context) error {
 	idParams := c.Param("id")
 	role := c.Param("role")
-	err := validators.IsAdmin(idParams , role)
+	err := validators.IsAdmin(idParams, role)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
@@ -157,7 +186,7 @@ func (h *AuthenticationHandler) IsAdmin(c echo.Context) error {
 			"error": err.Error(),
 		})
 	}
-	isAdmin, err := h.svc.IsAdminAccount(accountId , role)
+	isAdmin, err := h.svc.IsAdminAccount(accountId, role)
 	if err != nil {
 		println(err.Error())
 		return c.JSON(http.StatusBadRequest, map[string]string{
@@ -166,12 +195,13 @@ func (h *AuthenticationHandler) IsAdmin(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, isAdmin)
 }
+
 // validation done
 func (h *AuthenticationHandler) Verify(c echo.Context) error {
 	number := c.Param("number")
 	id := c.Param("id")
 
-	err := validators.VerifyValidation(number , id)
+	err := validators.VerifyValidation(number, id)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
