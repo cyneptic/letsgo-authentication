@@ -7,7 +7,7 @@ import (
 	repositories "github.com/cyneptic/letsgo-authentication/infrastructure/repository"
 	"github.com/cyneptic/letsgo-authentication/internal/core/entities"
 	"github.com/cyneptic/letsgo-authentication/internal/core/ports"
-	
+
 	"github.com/google/uuid"
 )
 
@@ -26,11 +26,18 @@ func NewAuthenticationService() *AuthenticationService {
 	}
 }
 
+func (u *AuthenticationService) DisableUser(target uuid.UUID, toggle bool) error {
+	err := u.db.DisableUser(target, toggle)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (u *AuthenticationService) AddUser(newUser entities.User) error {
 
-	
-
-	newUser.Password , _  = HashPassword(newUser.Password)
+	newUser.Password, _ = HashPassword(newUser.Password)
 
 	err := u.db.AddUser(newUser)
 	return err
@@ -42,11 +49,15 @@ func (u *AuthenticationService) LoginService(user entities.User) (string, error)
 
 	foundedUser, err := u.db.Login(email)
 
+	if foundedUser.Disabled {
+		return "", errors.New("Your account is temporarily disabled by an admin.")
+	}
+
 	if err != nil {
 		return "", err
 	}
 
-	decodedFoundedPassword := CheckPasswordHash(password , foundedUser.Password)
+	decodedFoundedPassword := CheckPasswordHash(password, foundedUser.Password)
 
 	if decodedFoundedPassword == false {
 		err := errors.New("email or password mismatch")
@@ -77,8 +88,8 @@ func (u *AuthenticationService) TokenReceiver(token string) (string, error) {
 	val, err := u.redis.TokenReceiver(token)
 	return val, err
 }
-func (u *AuthenticationService) IsAdminAccount(id uuid.UUID , role string) (bool, error) {
-	isAdmin, err := u.db.IsAdminAccount(id , role)
+func (u *AuthenticationService) IsAdminAccount(id uuid.UUID, role string) (bool, error) {
+	isAdmin, err := u.db.IsAdminAccount(id, role)
 	if err != nil {
 		return false, err
 	}

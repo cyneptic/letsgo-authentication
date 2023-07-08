@@ -7,12 +7,12 @@ import (
 )
 
 type UserServiceContract interface {
-	
+	DisableUser(target uuid.UUID, toggle bool) error
 	AddUser(newUser entities.User) error
 	LoginService(user entities.User) (string, error)
 	Logout(token string) error
-	IsAdminAccount(id uuid.UUID , role string) (bool, error)
-	Verify(number string , id uuid.UUID) (bool, error)
+	IsAdminAccount(id uuid.UUID, role string) (bool, error)
+	Verify(number string, id uuid.UUID) (bool, error)
 }
 
 type InMemoryServiceContracts interface {
