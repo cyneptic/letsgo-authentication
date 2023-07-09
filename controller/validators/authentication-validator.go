@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/cyneptic/letsgo-authentication/internal/core/entities"
+	"github.com/google/uuid"
 )
 
 func LoginValidation(u entities.User) error {
@@ -49,7 +50,7 @@ func RegisterValidation(u entities.User) error {
 	}
 	return nil
 }
-func IsAdmin(id string , role string) error {
+func IsAdmin(id string, role string) error {
 	if id == "" {
 		err := errors.New("please enter a valid id")
 		return err
@@ -67,6 +68,7 @@ func VerifyValidation(number, id string) error {
 	}
 	return nil
 }
+
 
 func CreateAdminVlidation(u entities.User )error {
 	if u.Name == "" {
@@ -95,5 +97,13 @@ func CreateAdminVlidation(u entities.User )error {
 	if u.Role != "sms_admin" && u.Role != "ticket_admin" {
 		return errors.New("invalid role. Role must be either 'sms_admin' or 'ticket_admin'")
 	}
+
+func DisableUser(target string, toggle bool) error {
+	_, err := uuid.Parse(target)
+	if err != nil {
+		return err
+	}
+
+
 	return nil
 }
