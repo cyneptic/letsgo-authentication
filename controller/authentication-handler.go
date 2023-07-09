@@ -155,7 +155,7 @@ func (h *AuthenticationHandler) CreateAdmin(c echo.Context) error {
 			"error": "Invalid request body",
 		})
 	}
-	err := validators.RegisterValidation(*newAdmin)
+	err := validators.CreateAdminVlidation(*newAdmin)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}

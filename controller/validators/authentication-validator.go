@@ -69,11 +69,41 @@ func VerifyValidation(number, id string) error {
 	return nil
 }
 
+
+func CreateAdminVlidation(u entities.User )error {
+	if u.Name == "" {
+		err := errors.New("please enter a valid name")
+		return err
+	}
+	if u.DateOfBirth.IsZero() {
+		err := errors.New("please enter a valid name")
+		return err
+	}
+	if u.PhoneNumber == "" {
+		err := errors.New("please enter a valid phone number")
+		return err
+	}
+	if u.Email == "" {
+		err := errors.New("please enter a valid email")
+		return err
+	}
+	if u.Password == "" {
+		err := errors.New("please enter a valid password")
+		return err
+	}
+	if u.Role == "" {
+		return errors.New("please provide valid role (sms_admin or ticket_admin)")
+	}
+	if u.Role != "sms_admin" && u.Role != "ticket_admin" {
+		return errors.New("invalid role. Role must be either 'sms_admin' or 'ticket_admin'")
+	}
+
 func DisableUser(target string, toggle bool) error {
 	_, err := uuid.Parse(target)
 	if err != nil {
 		return err
 	}
+
 
 	return nil
 }

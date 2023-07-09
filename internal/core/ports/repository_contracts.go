@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// اینترفیس دیتابیس هستش
+
 
 type UserRepositoryContracts interface {
 	DisableUser(target uuid.UUID, toggle bool) error
