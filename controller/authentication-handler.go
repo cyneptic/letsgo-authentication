@@ -78,7 +78,7 @@ func (h *AuthenticationHandler) loginHandler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	token, err := h.svc.LoginService(*user)
+	token, id, err := h.svc.LoginService(*user)
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{
@@ -86,7 +86,8 @@ func (h *AuthenticationHandler) loginHandler(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, token)
+	return c.JSON(http.StatusOK, map[string]string{
+		"token": token, "id": id})
 }
 
 // validation done

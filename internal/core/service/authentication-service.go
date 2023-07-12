@@ -43,35 +43,35 @@ func (u *AuthenticationService) AddUser(newUser entities.User) error {
 	return err
 }
 
-func (u *AuthenticationService) LoginService(user entities.User) (string, error) {
+func (u *AuthenticationService) LoginService(user entities.User) (string, string, error) {
 	email := user.Email
 	password := user.Password
 
 	foundedUser, err := u.db.Login(email)
 
 	if foundedUser.Disabled {
-		return "", errors.New("Your account is temporarily disabled by an admin.")
+		return "", "", errors.New("Your account is temporarily disabled by an admin.")
 	}
 
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	decodedFoundedPassword := CheckPasswordHash(password, foundedUser.Password)
 
 	if decodedFoundedPassword == false {
 		err := errors.New("email or password mismatch")
-		return "", err
+		return "", "", err
 	}
 	token := GenerateToken(foundedUser.DBModel.ID)
 
 	err = u.redis.AddToken(token)
 
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return token, nil
+	return token, foundedUser.ID.String(), nil
 }
 func (u *AuthenticationService) AddToken(token string) {
 	err := u.redis.AddToken(token)

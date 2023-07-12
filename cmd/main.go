@@ -12,5 +12,5 @@ func main() {
 	_ = godotenv.Load(".env")
 	e := echo.New()
 	controller.AddAuthServiceRoutes(e)
-	log.Fatal(e.Start(":8080"))
+	log.Fatal(e.Start(":8085"))
 }
